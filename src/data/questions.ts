@@ -26,7 +26,7 @@ export const questions: Question[] = [
         id: "mansion-tropical",
         title: "Tropical Villa",
         imageUrl:
-          "https://images.unsplash.com/photo-1499793983394-e58fc2baa9a5?w=800&q=80",
+          "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80",
         tags: ["tropical", "chill", "nature"],
       },
       {
@@ -47,7 +47,7 @@ export const questions: Question[] = [
         id: "mansion-cabin",
         title: "Luxury Mountain Lodge",
         imageUrl:
-          "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&q=80",
+          "https://images.unsplash.com/photo-1759281944287-9173dc7018e7?w=800&q=80",
         tags: ["cozy", "nature", "adventurous"],
       },
     ],
@@ -88,7 +88,7 @@ export const questions: Question[] = [
         id: "dress-sparkle",
         title: "Gold Sparkle",
         imageUrl:
-          "https://images.unsplash.com/photo-1550639525-c97d455acf70?w=800&q=80",
+          "https://images.unsplash.com/photo-1761164920854-7fadab441b25?w=800&q=80",
         tags: ["glamorous", "extra", "confident"],
       },
       {
@@ -122,7 +122,7 @@ export const questions: Question[] = [
         id: "bunny-lop",
         title: "Floppy Lop Bunny",
         imageUrl:
-          "https://images.unsplash.com/photo-1535241749838-299277c6fc1e?w=800&q=80",
+          "https://plus.unsplash.com/premium_photo-1661832480567-68a86cb46f34?w=800&q=80",
         tags: ["chill", "gentle", "sweet"],
       },
       {
@@ -136,14 +136,14 @@ export const questions: Question[] = [
         id: "bunny-baby",
         title: "Tiny Baby Bunny",
         imageUrl:
-          "https://images.unsplash.com/photo-1517331156700-3c241d2b4d83?w=800&q=80",
+          "https://images.unsplash.com/photo-1664781211050-fa042bfc7709?w=800&q=80",
         tags: ["sweet", "innocent", "soft"],
       },
       {
         id: "bunny-elegant",
         title: "Elegant Show Bunny",
         imageUrl:
-          "https://images.unsplash.com/photo-1573316364756-33b35cba30b3?w=800&q=80",
+          "https://images.unsplash.com/photo-1602557496847-11ea01879c87?w=800&q=80",
         tags: ["elegant", "confident", "glamorous"],
       },
     ],
@@ -191,7 +191,7 @@ export const questions: Question[] = [
         id: "color-cherry-red",
         title: "Cherry Red",
         imageUrl:
-          "https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80",
+          "https://images.unsplash.com/photo-1655129870529-f7cdc464a372?w=800&q=80",
         tags: ["bold", "passionate", "confident"],
       },
     ],
@@ -205,7 +205,7 @@ export const questions: Question[] = [
     prompt: "Which flower are you?",
     emoji: "🌸",
     coverImageUrl:
-      "https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=800&q=80",
+      "https://images.unsplash.com/photo-1655129870529-f7cdc464a372?w=800&q=80",
     options: [
       {
         id: "flower-rose",
@@ -305,20 +305,20 @@ export const questions: Question[] = [
     prompt: "Which horror character would your friend be?",
     emoji: "🔪",
     coverImageUrl:
-      "https://images.unsplash.com/photo-1509248961895-40e90da74fbc?w=800&q=80",
+      "https://plus.unsplash.com/premium_photo-1723877219812-c3d2f114d3a9?w=800&q=80",
     options: [
       {
         id: "horror-ghost",
         title: "Silent Ghost",
         imageUrl:
-          "https://images.unsplash.com/photo-1509248961895-40e90da74fbc?w=800&q=80",
+          "https://plus.unsplash.com/premium_photo-1723877219812-c3d2f114d3a9?w=800&q=80",
         tags: ["mysterious", "quiet", "ethereal"],
       },
       {
         id: "horror-vampire",
         title: "Elegant Vampire",
         imageUrl:
-          "https://images.unsplash.com/photo-1604882356271-7520f31e6e4e?w=800&q=80",
+          "https://images.unsplash.com/photo-1761414140137-9d6a3c704a8d?w=800&q=80",
         tags: ["elegant", "dramatic", "classic"],
       },
       {
@@ -353,13 +353,13 @@ export const questions: Question[] = [
     prompt: "Which cartoon sidekick is your friend?",
     emoji: "🧸",
     coverImageUrl:
-      "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80",
+      "https://images.unsplash.com/photo-1746352066879-8f2604b5bf41?w=800&q=80",
     options: [
       {
         id: "sidekick-loyal",
         title: "Loyal Companion",
         imageUrl:
-          "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80",
+          "https://images.unsplash.com/photo-1746352066879-8f2604b5bf41?w=800&q=80",
         tags: ["loyal", "dependable", "sweet"],
       },
       {
@@ -380,14 +380,14 @@ export const questions: Question[] = [
         id: "sidekick-brave",
         title: "Tiny But Brave",
         imageUrl:
-          "https://images.unsplash.com/photo-1425082661507-091f0be3a413?w=800&q=80",
+          "https://plus.unsplash.com/premium_photo-1661508614319-b5e40d1143bb?w=800&q=80",
         tags: ["brave", "bold", "adventurous"],
       },
       {
         id: "sidekick-chill",
         title: "Chill Vibes Only",
         imageUrl:
-          "https://images.unsplash.com/photo-1474511320723-9a56873571b7?w=800&q=80",
+          "https://images.unsplash.com/photo-1760214694267-473ee4d07280?w=800&q=80",
         tags: ["chill", "calm", "easygoing"],
       },
     ],
@@ -449,7 +449,7 @@ export const questions: Question[] = [
     prompt: "Which zodiac energy does your friend give?",
     emoji: "♈",
     coverImageUrl:
-      "https://images.unsplash.com/photo-1475274047050-1d0c55b7e5d9?w=800&q=80",
+      "https://images.unsplash.com/photo-1570041544732-7690bf144593?w=800&q=80",
     options: [
       {
         id: "zodiac-fire",
@@ -483,7 +483,7 @@ export const questions: Question[] = [
         id: "zodiac-mystery",
         title: "Mystery Energy",
         imageUrl:
-          "https://images.unsplash.com/photo-1475274047050-1d0c55b7e5d9?w=800&q=80",
+          "https://images.unsplash.com/photo-1570041544732-7690bf144593?w=800&q=80",
         tags: ["mysterious", "unpredictable", "independent"],
       },
     ],
