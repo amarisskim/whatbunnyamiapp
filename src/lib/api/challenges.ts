@@ -111,6 +111,12 @@ export async function respondToChallenge(data: {
     .eq("challenge_id", data.challengeId)
     .eq("recipient_id", data.responderId);
 
+  // Mark the challenge itself as completed
+  await supabase
+    .from("challenges")
+    .update({ status: "completed" })
+    .eq("id", data.challengeId);
+
   return true;
 }
 
