@@ -17,7 +17,6 @@ import {
   PlayMode,
 } from "@/types";
 import Header from "@/components/Header";
-import ChallengeCard from "@/components/ChallengeCard";
 import EmptyState from "@/components/EmptyState";
 
 type Tab = "active" | "completed" | "saved";
@@ -29,7 +28,16 @@ const playModeIcons: Record<PlayMode, string> = {
   "two-player-guess": "🧠",
 };
 
-// Represents a completed challenge with the picked option resolved
+// Gradient colors for the colored cards (no image)
+const cardGradients = [
+  "from-neon-cyan/30 to-neon-purple/30",
+  "from-neon-pink/30 to-neon-purple/30",
+  "from-neon-purple/30 to-neon-cyan/30",
+  "from-neon-cyan/30 to-neon-pink/30",
+  "from-neon-pink/30 to-neon-cyan/30",
+  "from-neon-purple/30 to-neon-pink/30",
+];
+
 interface CompletedResult {
   challengeId: string;
   questionTitle: string;
@@ -37,6 +45,17 @@ interface CompletedResult {
   playMode: PlayMode;
   pickedOptionTitle: string;
   pickedOptionImageUrl: string;
+}
+
+interface ActiveItem {
+  id: string;
+  questionId: string;
+  questionTitle: string;
+  questionEmoji: string;
+  playMode: PlayMode;
+  href: string;
+  label: string; // e.g. "Tap to play" or "Waiting..."
+  senderName?: string;
 }
 
 export default function MyLibraryPage() {
@@ -75,29 +94,53 @@ export default function MyLibraryPage() {
     (r) => r.status === "completed"
   );
 
-  // Active = pending received + active sent
   const activeSent = sentChallenges.filter((c) => c.status === "active");
-
-  // Completed = completed received + completed sent
   const completedSent = sentChallenges.filter((c) => c.status === "completed");
 
-  // Build completed results list with resolved option images
+  // --- Build active items ---
+  const activeItems: ActiveItem[] = [];
+
+  pendingReceived.forEach((r) => {
+    const question = getQuestionById(r.challenge?.question_id || "");
+    if (!question) return;
+    activeItems.push({
+      id: r.id,
+      questionId: question.id,
+      questionTitle: question.title,
+      questionEmoji: question.emoji,
+      playMode: r.challenge?.play_mode || "solo",
+      href: `/challenge/${r.challenge_id}/play`,
+      label: `From ${r.challenge?.sender?.display_name || "Friend"}`,
+      senderName: r.challenge?.sender?.display_name || "Friend",
+    });
+  });
+
+  activeSent.forEach((c) => {
+    const question = getQuestionById(c.question_id);
+    if (!question) return;
+    activeItems.push({
+      id: c.id,
+      questionId: question.id,
+      questionTitle: question.title,
+      questionEmoji: question.emoji,
+      playMode: c.play_mode,
+      href: `/challenge/${c.id}/results`,
+      label: "Waiting for responses",
+    });
+  });
+
+  // --- Build completed results ---
   const completedResults: CompletedResult[] = [];
 
-  // From sent challenges — my pick is sender_option_id
   completedSent.forEach((c) => {
     const question = getQuestionById(c.question_id);
     if (!question) return;
-
-    // For solo, the user's pick might be in responses or sender_option_id
     const myOptionId =
       c.sender_option_id ||
       c.responses?.find((r) => r.responder_id === user?.id)
         ?.responder_option_id;
-
     const pickedOption = question.options.find((o) => o.id === myOptionId);
     if (!pickedOption) return;
-
     completedResults.push({
       challengeId: c.id,
       questionTitle: question.title,
@@ -108,22 +151,18 @@ export default function MyLibraryPage() {
     });
   });
 
-  // From received challenges — my pick is in challenge_responses
   completedReceived.forEach((r) => {
     const challenge = r.challenge;
     if (!challenge) return;
     const question = getQuestionById(challenge.question_id);
     if (!question) return;
-
     const myResp = challenge.responses?.find(
       (resp) => resp.responder_id === user?.id
     );
     const myOptionId =
       myResp?.responder_option_id || myResp?.responder_guess_id;
-
     const pickedOption = question.options.find((o) => o.id === myOptionId);
     if (!pickedOption) return;
-
     completedResults.push({
       challengeId: r.challenge_id,
       questionTitle: question.title,
@@ -134,18 +173,39 @@ export default function MyLibraryPage() {
     });
   });
 
+  // --- Build saved items ---
+  const savedItems = savedChallenges
+    .map((s) => {
+      const question = getQuestionById(s.question_id);
+      if (!question) return null;
+      return {
+        id: s.id,
+        questionId: s.question_id,
+        questionTitle: question.title,
+        questionEmoji: question.emoji,
+        href: `/library/${s.question_id}`,
+      };
+    })
+    .filter(Boolean) as {
+    id: string;
+    questionId: string;
+    questionTitle: string;
+    questionEmoji: string;
+    href: string;
+  }[];
+
   const tabs: { key: Tab; label: string; count: number }[] = [
     {
       key: "active",
       label: "Active",
-      count: pendingReceived.length + activeSent.length,
+      count: activeItems.length,
     },
     {
       key: "completed",
       label: "Completed",
       count: completedResults.length,
     },
-    { key: "saved", label: "Saved", count: savedChallenges.length },
+    { key: "saved", label: "Saved", count: savedItems.length },
   ];
 
   if (loading) {
@@ -191,52 +251,49 @@ export default function MyLibraryPage() {
           ))}
         </div>
 
-        {/* Active tab */}
+        {/* Active tab — colored cards grid */}
         {activeTab === "active" && (
-          <div className="flex flex-col gap-3 animate-fade-in">
-            {pendingReceived.length > 0 && (
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/30">
-                  From friends
-                </p>
-                <div className="flex flex-col gap-2">
-                  {pendingReceived.map((r) => (
-                    <ChallengeCard
-                      key={r.id}
-                      id={r.challenge_id}
-                      questionId={r.challenge?.question_id || ""}
-                      playMode={r.challenge?.play_mode || "solo"}
-                      senderName={
-                        r.challenge?.sender?.display_name || "Friend"
-                      }
-                      status="pending"
+          <div className="animate-fade-in">
+            {activeItems.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {activeItems.map((item, i) => (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className="group relative aspect-square overflow-hidden rounded-2xl transition-all active:scale-[0.97]"
+                  >
+                    {/* Gradient background */}
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${
+                        cardGradients[i % cardGradients.length]
+                      }`}
                     />
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {activeSent.length > 0 && (
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/30">
-                  Sent by you
-                </p>
-                <div className="flex flex-col gap-2">
-                  {activeSent.map((c) => (
-                    <ChallengeCard
-                      key={c.id}
-                      id={c.id}
-                      questionId={c.question_id}
-                      playMode={c.play_mode}
-                      status="active"
-                      isSender
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+                    {/* Content */}
+                    <div className="relative flex h-full flex-col items-center justify-center p-4">
+                      <span className="text-4xl mb-2">{item.questionEmoji}</span>
+                      <h3 className="text-center text-sm font-bold text-white leading-tight">
+                        {item.questionTitle}
+                      </h3>
+                    </div>
 
-            {pendingReceived.length === 0 && activeSent.length === 0 && (
+                    {/* Top — mode icon */}
+                    <div className="absolute top-3 left-3">
+                      <span className="text-sm">
+                        {playModeIcons[item.playMode]}
+                      </span>
+                    </div>
+
+                    {/* Bottom — status label */}
+                    <div className="absolute inset-x-0 bottom-0 p-3">
+                      <p className="text-center text-[11px] font-medium text-white/50">
+                        {item.label}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
               <EmptyState
                 emoji="📭"
                 title="No active challenges"
@@ -254,7 +311,7 @@ export default function MyLibraryPage() {
           </div>
         )}
 
-        {/* Completed tab — visual grid of results */}
+        {/* Completed tab — image grid of results */}
         {activeTab === "completed" && (
           <div className="animate-fade-in">
             {completedResults.length > 0 ? (
@@ -265,7 +322,6 @@ export default function MyLibraryPage() {
                     href={`/challenge/${result.challengeId}/results`}
                     className="group relative aspect-square overflow-hidden rounded-2xl transition-all active:scale-[0.97]"
                   >
-                    {/* Option image */}
                     <Image
                       src={result.pickedOptionImageUrl}
                       alt={result.pickedOptionTitle}
@@ -273,8 +329,6 @@ export default function MyLibraryPage() {
                       className="object-cover transition-transform group-hover:scale-105"
                       sizes="(max-width: 768px) 50vw, 200px"
                     />
-
-                    {/* Top overlay — challenge name + mode icon */}
                     <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/70 via-black/30 to-transparent p-3">
                       <div className="flex items-center gap-1.5">
                         <span className="text-sm">
@@ -285,8 +339,6 @@ export default function MyLibraryPage() {
                         </span>
                       </div>
                     </div>
-
-                    {/* Bottom overlay — what they picked */}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-3">
                       <p className="truncate text-xs font-medium text-white/80 drop-shadow-lg">
                         {result.pickedOptionTitle}
@@ -305,20 +357,42 @@ export default function MyLibraryPage() {
           </div>
         )}
 
-        {/* Saved tab */}
+        {/* Saved tab — colored cards grid */}
         {activeTab === "saved" && (
-          <div className="flex flex-col gap-3 animate-fade-in">
-            {savedChallenges.map((s) => (
-              <ChallengeCard
-                key={s.id}
-                id={s.id}
-                questionId={s.question_id}
-                playMode="solo"
-                status="saved"
-              />
-            ))}
+          <div className="animate-fade-in">
+            {savedItems.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {savedItems.map((item, i) => (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className="group relative aspect-square overflow-hidden rounded-2xl transition-all active:scale-[0.97]"
+                  >
+                    {/* Gradient background */}
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${
+                        cardGradients[i % cardGradients.length]
+                      }`}
+                    />
 
-            {savedChallenges.length === 0 && (
+                    {/* Content */}
+                    <div className="relative flex h-full flex-col items-center justify-center p-4">
+                      <span className="text-4xl mb-2">{item.questionEmoji}</span>
+                      <h3 className="text-center text-sm font-bold text-white leading-tight">
+                        {item.questionTitle}
+                      </h3>
+                    </div>
+
+                    {/* Bottom — saved label */}
+                    <div className="absolute inset-x-0 bottom-0 p-3">
+                      <p className="text-center text-[11px] font-medium text-white/50">
+                        🔖 Saved
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
               <EmptyState
                 emoji="🔖"
                 title="No saved challenges"
