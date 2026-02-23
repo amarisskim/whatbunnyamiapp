@@ -223,7 +223,7 @@ export async function getReceivedChallenges(
   const { data, error } = await supabase
     .from("challenge_recipients")
     .select(
-      "*, challenge:challenges(*, sender:profiles!challenges_sender_id_fkey(*))"
+      "*, challenge:challenges(*, sender:profiles!challenges_sender_id_fkey(*), responses:challenge_responses(*))"
     )
     .eq("recipient_id", userId)
     .order("created_at", { ascending: false });

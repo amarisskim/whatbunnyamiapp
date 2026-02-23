@@ -1,23 +1,43 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useUser } from "@/lib/auth";
 import {
   getMySentChallenges,
   getReceivedChallenges,
   getSavedChallenges,
 } from "@/lib/api/challenges";
+import { getQuestionById } from "@/data/questions";
 import {
   Challenge,
   ChallengeRecipient,
   SavedChallenge,
+  PlayMode,
 } from "@/types";
 import Header from "@/components/Header";
 import ChallengeCard from "@/components/ChallengeCard";
 import EmptyState from "@/components/EmptyState";
-import Link from "next/link";
 
 type Tab = "active" | "completed" | "saved";
+
+const playModeIcons: Record<PlayMode, string> = {
+  solo: "💖",
+  compare: "🤝",
+  "guess-my-pick": "🔮",
+  "two-player-guess": "🧠",
+};
+
+// Represents a completed challenge with the picked option resolved
+interface CompletedResult {
+  challengeId: string;
+  questionTitle: string;
+  questionEmoji: string;
+  playMode: PlayMode;
+  pickedOptionTitle: string;
+  pickedOptionImageUrl: string;
+}
 
 export default function MyLibraryPage() {
   const { user } = useUser();
@@ -61,6 +81,59 @@ export default function MyLibraryPage() {
   // Completed = completed received + completed sent
   const completedSent = sentChallenges.filter((c) => c.status === "completed");
 
+  // Build completed results list with resolved option images
+  const completedResults: CompletedResult[] = [];
+
+  // From sent challenges — my pick is sender_option_id
+  completedSent.forEach((c) => {
+    const question = getQuestionById(c.question_id);
+    if (!question) return;
+
+    // For solo, the user's pick might be in responses or sender_option_id
+    const myOptionId =
+      c.sender_option_id ||
+      c.responses?.find((r) => r.responder_id === user?.id)
+        ?.responder_option_id;
+
+    const pickedOption = question.options.find((o) => o.id === myOptionId);
+    if (!pickedOption) return;
+
+    completedResults.push({
+      challengeId: c.id,
+      questionTitle: question.title,
+      questionEmoji: question.emoji,
+      playMode: c.play_mode,
+      pickedOptionTitle: pickedOption.title,
+      pickedOptionImageUrl: pickedOption.imageUrl,
+    });
+  });
+
+  // From received challenges — my pick is in challenge_responses
+  completedReceived.forEach((r) => {
+    const challenge = r.challenge;
+    if (!challenge) return;
+    const question = getQuestionById(challenge.question_id);
+    if (!question) return;
+
+    const myResp = challenge.responses?.find(
+      (resp) => resp.responder_id === user?.id
+    );
+    const myOptionId =
+      myResp?.responder_option_id || myResp?.responder_guess_id;
+
+    const pickedOption = question.options.find((o) => o.id === myOptionId);
+    if (!pickedOption) return;
+
+    completedResults.push({
+      challengeId: r.challenge_id,
+      questionTitle: question.title,
+      questionEmoji: question.emoji,
+      playMode: challenge.play_mode,
+      pickedOptionTitle: pickedOption.title,
+      pickedOptionImageUrl: pickedOption.imageUrl,
+    });
+  });
+
   const tabs: { key: Tab; label: string; count: number }[] = [
     {
       key: "active",
@@ -70,7 +143,7 @@ export default function MyLibraryPage() {
     {
       key: "completed",
       label: "Completed",
-      count: completedReceived.length + completedSent.length,
+      count: completedResults.length,
     },
     { key: "saved", label: "Saved", count: savedChallenges.length },
   ];
@@ -121,7 +194,6 @@ export default function MyLibraryPage() {
         {/* Active tab */}
         {activeTab === "active" && (
           <div className="flex flex-col gap-3 animate-fade-in">
-            {/* Pending challenges from friends */}
             {pendingReceived.length > 0 && (
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/30">
@@ -144,7 +216,6 @@ export default function MyLibraryPage() {
               </div>
             )}
 
-            {/* Challenges I sent (waiting for responses) */}
             {activeSent.length > 0 && (
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/30">
@@ -183,47 +254,48 @@ export default function MyLibraryPage() {
           </div>
         )}
 
-        {/* Completed tab */}
+        {/* Completed tab — visual grid of results */}
         {activeTab === "completed" && (
-          <div className="flex flex-col gap-3 animate-fade-in">
-            {/* Completed received */}
-            {completedReceived.map((r) => {
-              const responses = r.challenge?.responses || [];
-              const myResp = responses.find(
-                (resp) => resp.responder_id === user?.id
-              );
-              return (
-                <ChallengeCard
-                  key={r.id}
-                  id={r.challenge_id}
-                  questionId={r.challenge?.question_id || ""}
-                  playMode={r.challenge?.play_mode || "solo"}
-                  senderName={r.challenge?.sender?.display_name || "Friend"}
-                  status="completed"
-                  resultType={myResp?.result_type}
-                  vibeLevel={myResp?.vibe_level}
-                />
-              );
-            })}
+          <div className="animate-fade-in">
+            {completedResults.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {completedResults.map((result) => (
+                  <Link
+                    key={result.challengeId}
+                    href={`/challenge/${result.challengeId}/results`}
+                    className="group relative aspect-square overflow-hidden rounded-2xl transition-all active:scale-[0.97]"
+                  >
+                    {/* Option image */}
+                    <Image
+                      src={result.pickedOptionImageUrl}
+                      alt={result.pickedOptionTitle}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-105"
+                      sizes="(max-width: 768px) 50vw, 200px"
+                    />
 
-            {/* Completed sent */}
-            {completedSent.map((c) => {
-              const firstResp = c.responses?.[0];
-              return (
-                <ChallengeCard
-                  key={c.id}
-                  id={c.id}
-                  questionId={c.question_id}
-                  playMode={c.play_mode}
-                  status="completed"
-                  resultType={firstResp?.result_type}
-                  vibeLevel={firstResp?.vibe_level}
-                  isSender
-                />
-              );
-            })}
+                    {/* Top overlay — challenge name + mode icon */}
+                    <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/70 via-black/30 to-transparent p-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm">
+                          {playModeIcons[result.playMode]}
+                        </span>
+                        <span className="truncate text-xs font-bold text-white drop-shadow-lg">
+                          {result.questionTitle}
+                        </span>
+                      </div>
+                    </div>
 
-            {completedReceived.length === 0 && completedSent.length === 0 && (
+                    {/* Bottom overlay — what they picked */}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-3">
+                      <p className="truncate text-xs font-medium text-white/80 drop-shadow-lg">
+                        {result.pickedOptionTitle}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
               <EmptyState
                 emoji="🏁"
                 title="No completed challenges yet"
