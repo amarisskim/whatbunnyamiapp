@@ -192,8 +192,9 @@ export default function MyLibraryPage() {
     });
   });
 
-  // --- Build saved items ---
+  // --- Build saved items (exclude already-completed questions) ---
   const savedItems = savedChallenges
+    .filter((s) => !completedQuestionIds.has(s.question_id))
     .map((s) => {
       const question = getQuestionById(s.question_id);
       if (!question) return null;

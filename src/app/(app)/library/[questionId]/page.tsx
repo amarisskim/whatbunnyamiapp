@@ -16,11 +16,13 @@ export default function QuestionDetailPage() {
   const questionId = params.questionId as string;
   const question = getQuestionById(questionId);
   const [saved, setSaved] = useState(false);
+  const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     if (!user || !question) return;
     loadSaved();
+    checkCompleted();
   }, [user, questionId]);
 
   async function loadSaved() {
@@ -33,6 +35,20 @@ export default function QuestionDetailPage() {
       .maybeSingle();
 
     setSaved(!!data);
+  }
+
+  async function checkCompleted() {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("challenges")
+      .select("id")
+      .eq("sender_id", user!.id)
+      .eq("question_id", questionId)
+      .eq("status", "completed")
+      .limit(1)
+      .maybeSingle();
+
+    setAlreadyCompleted(!!data);
   }
 
   async function handleSave() {
@@ -117,17 +133,23 @@ export default function QuestionDetailPage() {
         <p className="mt-1 text-xs text-white/30">
           {question.options.length} options to choose from
         </p>
-        {/* Save button */}
-        <button
-          onClick={handleSave}
-          className={`mt-3 rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
-            saved
-              ? "bg-neon-cyan/10 text-neon-cyan"
-              : "bg-white/[0.06] text-white/40 hover:text-white/60"
-          }`}
-        >
-          {saved ? "🔖 Saved" : "🔖 Save for later"}
-        </button>
+        {/* Save button (hidden if already completed) */}
+        {alreadyCompleted ? (
+          <span className="mt-3 inline-block rounded-full bg-white/[0.06] px-4 py-1.5 text-xs font-bold text-white/30">
+            ✅ Completed
+          </span>
+        ) : (
+          <button
+            onClick={handleSave}
+            className={`mt-3 rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
+              saved
+                ? "bg-neon-cyan/10 text-neon-cyan"
+                : "bg-white/[0.06] text-white/40 hover:text-white/60"
+            }`}
+          >
+            {saved ? "🔖 Saved" : "🔖 Save for later"}
+          </button>
+        )}
       </div>
 
       {/* Preview of options */}
