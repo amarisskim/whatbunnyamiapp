@@ -87,15 +87,34 @@ export default function MyLibraryPage() {
   }
 
   // Split received into pending (active) and completed
-  const pendingReceived = receivedChallenges.filter(
-    (r) => r.status === "pending"
-  );
   const completedReceived = receivedChallenges.filter(
     (r) => r.status === "completed"
   );
 
-  const activeSent = sentChallenges.filter((c) => c.status === "active");
   const completedSent = sentChallenges.filter((c) => c.status === "completed");
+
+  // Build a set of question IDs that the user has already completed
+  // (either as sender or recipient) to filter them out of the active tab
+  const completedQuestionIds = new Set<string>();
+  completedSent.forEach((c) => completedQuestionIds.add(c.question_id));
+  completedReceived.forEach((r) => {
+    if (r.challenge?.question_id) {
+      completedQuestionIds.add(r.challenge.question_id);
+    }
+  });
+
+  // Filter active sent challenges: exclude any where the user already
+  // completed that same question (e.g. they replayed from library but didn't finish)
+  const activeSent = sentChallenges.filter(
+    (c) => c.status === "active" && !completedQuestionIds.has(c.question_id)
+  );
+
+  // Also filter pending received challenges the same way
+  const pendingReceived = receivedChallenges.filter(
+    (r) =>
+      r.status === "pending" &&
+      !completedQuestionIds.has(r.challenge?.question_id || "")
+  );
 
   // --- Build active items ---
   const activeItems: ActiveItem[] = [];
